@@ -246,7 +246,8 @@ h1 {
   color: var(--navy);
 }
 
-.actions button {
+.actions button,
+.actions a {
   border: 0;
   border-radius: 9px;
   cursor: pointer;
@@ -257,7 +258,8 @@ h1 {
   transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
-.actions button:hover:not(:disabled) {
+.actions button:hover:not(:disabled),
+.actions a:hover {
   transform: translateY(-1px);
 }
 
@@ -367,7 +369,8 @@ h1 {
     flex-direction: column-reverse;
   }
 
-  .actions button {
+  .actions button,
+  .actions a {
     width: 100%;
   }
 }
