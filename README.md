@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Paperlight PDF Compressor
+
+A browser-based PDF compressor built with Next.js and Ghostscript WebAssembly.
+Select a PDF, start compression, and download the smaller file without uploading
+the document to a server.
+
+## Features
+
+- Compresses PDFs directly in the browser
+- Uses Ghostscript WebAssembly with the `ebook` PDF quality preset
+- Shows progress as pages are processed
+- Downloads the result as `compressed.pdf`
+- Does not require a backend or file upload service
+
+## Requirements
+
+- Node.js 18.18 or newer
+- A modern browser with WebAssembly support
+- An internet connection the first time Ghostscript is loaded from jsDelivr
 
 ## Getting Started
 
-First, run the development server:
+Install the dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+For a production build:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. Choose a PDF file.
+2. Select **Compress PDF**.
+3. Wait for the page progress bar to finish.
+4. The compressed PDF downloads automatically.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ghostscript loads automatically when compression starts. The PDF is processed
+in the browser, so the original file is not sent to an application server.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Performance Note
 
-## Deploy on Vercel
+Ghostscript WebAssembly is powerful, but running it in the browser is slower
+than running native Ghostscript on a server or desktop. Compression is performed
+page by page, which allows the progress bar to show completed pages but can take
+some time for larger documents.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+For the best experience, use PDFs with **fewer than 10 pages**. Larger PDFs may
+take significantly longer, use more browser memory, and make the browser appear
+unresponsive while each page is being compressed.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application currently uses Ghostscript's `/ebook` preset, which balances
+file size and document quality. Compression results depend on the PDF's images,
+fonts, and existing compression.
+
+## Scripts
+
+| Command         | Description                  |
+| --------------- | ---------------------------- |
+| `npm run dev`   | Start the development server |
+| `npm run lint`  | Run ESLint                   |
+| `npm run build` | Create a production build    |
+| `npm start`     | Start the production server  |
+
+## Technology
+
+- [Next.js](https://nextjs.org/)
+- [React](https://react.dev/)
+- [Ghostscript WebAssembly](https://github.com/jspawn/ghostscript-wasm)
+- [Tailwind CSS](https://tailwindcss.com/)

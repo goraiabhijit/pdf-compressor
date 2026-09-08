@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3f6f9;
+  --foreground: #10202c;
+  --ink-soft: #587080;
+  --line: #d8e3ea;
+  --navy: #123b53;
+  --teal: #168b83;
+  --teal-dark: #0f716b;
+  --paper: #ffffff;
 }
 
 @theme inline {
@@ -12,15 +18,352 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), sans-serif;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 32px 24px;
+  position: relative;
+}
+
+.app-shell::before,
+.app-shell::after {
+  border: 1px solid rgba(22, 139, 131, 0.12);
+  border-radius: 999px;
+  content: "";
+  height: 360px;
+  position: absolute;
+  width: 360px;
+}
+
+.app-shell::before {
+  right: -140px;
+  top: -150px;
+}
+
+.app-shell::after {
+  bottom: -220px;
+  left: -170px;
+}
+
+.topbar,
+.compressor-card {
+  margin: 0 auto;
+  max-width: 920px;
+  position: relative;
+  z-index: 1;
+}
+
+.topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0 42px;
+}
+
+.brand {
+  align-items: center;
+  color: var(--navy);
+  display: flex;
+  font-size: 15px;
+  font-weight: 760;
+  gap: 10px;
+  letter-spacing: -0.02em;
+}
+
+.brand-mark {
+  align-items: center;
+  background: var(--teal);
+  border-radius: 9px;
+  color: white;
+  display: inline-flex;
+  font-size: 14px;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.topbar-note {
+  color: var(--ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.compressor-card {
+  background: var(--paper);
+  border: 1px solid rgba(16, 32, 44, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(35, 65, 80, 0.11);
+  padding: clamp(30px, 6vw, 68px);
+}
+
+.card-heading {
+  max-width: 600px;
+}
+
+.eyebrow {
+  align-items: center;
+  color: var(--teal-dark);
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 8px;
+  letter-spacing: 0.14em;
+}
+
+.eyebrow::before {
+  background: var(--teal);
+  border-radius: 50%;
+  content: "";
+  height: 7px;
+  width: 7px;
+}
+
+h1 {
+  color: var(--navy);
+  font-size: clamp(38px, 6vw, 68px);
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+  margin: 18px 0 18px;
+  max-width: 630px;
+}
+
+.intro {
+  color: var(--ink-soft);
+  font-size: 17px;
+  line-height: 1.6;
+  margin: 0 0 42px;
+  max-width: 510px;
+}
+
+.file-picker {
+  align-items: center;
+  background: #f7fafb;
+  border: 1px dashed #a9c3cb;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  gap: 14px;
+  min-height: 86px;
+  padding: 14px 16px;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.file-picker:hover {
+  background: #f0f8f7;
+  border-color: var(--teal);
+  transform: translateY(-1px);
+}
+
+.file-picker:focus-within {
+  outline: 3px solid rgba(22, 139, 131, 0.2);
+  outline-offset: 3px;
+}
+
+.upload-icon {
+  align-items: center;
+  background: #d9f0ed;
+  border-radius: 10px;
+  color: var(--teal-dark);
+  display: inline-flex;
+  font-size: 23px;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.file-picker-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.file-picker-copy strong {
+  color: var(--navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-picker-copy small {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.browse-label {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 13px;
+}
+
+.file-picker input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.performance-note {
+  border-left: 3px solid #b9deda;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 16px 0 0;
+  padding: 2px 0 2px 12px;
+}
+
+.performance-note strong {
+  color: var(--navy);
+}
+
+.actions button {
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 750;
+  min-height: 48px;
+  padding: 0 20px;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.primary-button {
+  background: var(--teal);
+  box-shadow: 0 8px 18px rgba(22, 139, 131, 0.2);
+  color: white;
+  flex: 1;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--teal-dark);
+  box-shadow: 0 10px 22px rgba(22, 139, 131, 0.28);
+}
+
+.secondary-button {
+  background: white;
+  border: 1px solid var(--line) !important;
+  color: var(--navy);
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #f4f8f9;
+}
+
+.actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.progress-area {
+  margin-top: 24px;
+}
+
+.progress-label {
+  color: var(--ink-soft);
+  display: flex;
+  font-size: 12px;
+  font-weight: 700;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.progress-track {
+  background: #e3edef;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: var(--teal);
+  border-radius: inherit;
+  height: 100%;
+  transition: width 180ms ease;
+}
+
+.status-message {
+  background: #eef8f5;
+  border-radius: 8px;
+  color: #14665e;
+  font-size: 13px;
+  margin: 22px 0 0;
+  padding: 12px 14px;
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    padding: 20px 14px;
+  }
+
+  .topbar {
+    padding-bottom: 28px;
+  }
+
+  .topbar-note {
+    display: none;
+  }
+
+  .compressor-card {
+    border-radius: 16px;
+    padding: 30px 20px;
+  }
+
+  h1 {
+    font-size: 47px;
+  }
+
+  .intro {
+    font-size: 15px;
+    margin-bottom: 30px;
+  }
+
+  .file-picker {
+    align-items: flex-start;
+  }
+
+  .browse-label {
+    display: none;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions button {
+    width: 100%;
+  }
 }

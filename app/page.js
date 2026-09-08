@@ -1,69 +1,219 @@
-import Image from "next/image";
+"use client";
+import { useRef, useState } from "react";
 
 export default function Home() {
+  const [file, setFile] = useState(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [message, setMessage] = useState("");
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const engineLoadPromise = useRef(null);
+
+  const loadGhostscript = () => {
+    if (window.ghostscript) return Promise.resolve(window.ghostscript);
+    if (engineLoadPromise.current) return engineLoadPromise.current;
+
+    engineLoadPromise.current = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.type = "module";
+      script.textContent = `
+        try {
+          const { default: initGhostscript } = await import("https://cdn.jsdelivr.net/npm/@jspawn/ghostscript-wasm@0.0.2/gs.mjs");
+          window.ghostscript = await initGhostscript({
+            locateFile: file =>
+              \`https://cdn.jsdelivr.net/npm/@jspawn/ghostscript-wasm@0.0.2/\${file}\`
+          });
+          window.dispatchEvent(new Event("ghostscript-ready"));
+        } catch (error) {
+          window.dispatchEvent(new CustomEvent("ghostscript-error", { detail: error }));
+        }
+      `;
+
+      const cleanup = () => {
+        window.removeEventListener("ghostscript-ready", handleReady);
+        window.removeEventListener("ghostscript-error", handleError);
+      };
+      const handleReady = () => {
+        cleanup();
+        resolve(window.ghostscript);
+      };
+      const handleError = (event) => {
+        cleanup();
+        engineLoadPromise.current = null;
+        reject(event.detail ?? new Error("Ghostscript failed to load."));
+      };
+
+      window.addEventListener("ghostscript-ready", handleReady);
+      window.addEventListener("ghostscript-error", handleError);
+      document.body.appendChild(script);
+    });
+
+    return engineLoadPromise.current;
+  };
+
+  const countPdfPages = async (pdfFile) => {
+    const bytes = new Uint8Array(await pdfFile.arrayBuffer());
+    const pdfText = new TextDecoder("latin1").decode(bytes);
+    const pageMatches = pdfText.match(/\/Type\s*\/Page\b/g);
+    return Math.max(pageMatches?.length ?? 1, 1);
+  };
+
+  const compress = async () => {
+    if (!file) return;
+
+    setIsCompressing(true);
+    setMessage("");
+
+    try {
+      const ghostscript = await loadGhostscript();
+      const totalPages = await countPdfPages(file);
+      const buffer = await file.arrayBuffer();
+
+      ghostscript.FS.writeFile("input.pdf", new Uint8Array(buffer));
+      setProgress({ current: 0, total: totalPages });
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      for (let page = 1; page <= totalPages; page += 1) {
+        ghostscript.callMain([
+          "-sDEVICE=pdfwrite",
+          "-dPDFSETTINGS=/ebook",
+          "-dNOPAUSE",
+          "-dBATCH",
+          `-dFirstPage=${page}`,
+          `-dLastPage=${page}`,
+          `-sOutputFile=page-${page}.pdf`,
+          "input.pdf",
+        ]);
+        setProgress({ current: page, total: totalPages });
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+
+      ghostscript.callMain([
+        "-sDEVICE=pdfwrite",
+        "-dNOPAUSE",
+        "-dBATCH",
+        "-sOutputFile=output.pdf",
+        ...Array.from(
+          { length: totalPages },
+          (_, index) => `page-${index + 1}.pdf`,
+        ),
+      ]);
+
+      const output = ghostscript.FS.readFile("output.pdf");
+
+      const pdfBlob = new Blob([output], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "compressed.pdf";
+      link.click();
+      URL.revokeObjectURL(url);
+      setMessage("Your compressed PDF is ready.");
+    } catch (error) {
+      console.error(error);
+      setMessage("Compression failed. Please try again.");
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files?.[0] ?? null;
+    setFile(selectedFile);
+    setMessage("");
+    setProgress({ current: 0, total: 0 });
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.js
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="app-shell">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            ↗
+          </span>
+          Paperlight
+        </div>
+        <span className="topbar-note">PRIVATE · IN-BROWSER PROCESSING</span>
+      </header>
+      <section className="compressor-card" aria-labelledby="page-title">
+        <div className="card-heading">
+          <div className="eyebrow">PDF TOOL</div>
+          <h1 id="page-title">Make your PDF smaller.</h1>
+          <p className="intro">
+            A simple way to reduce file size while keeping your document sharp.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <label className="file-picker">
+          <span className="upload-icon" aria-hidden="true">
+            ↑
+          </span>
+          <span className="file-picker-copy">
+            <strong>{file ? file.name : "Choose a PDF file"}</strong>
+            <small>
+              {file
+                ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
+                : "PDF files only"}
+            </small>
+          </span>
+          <span className="browse-label">Browse</span>
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileChange}
+          />
+        </label>
+
+        <p className="performance-note">
+          <strong>Best for smaller PDFs.</strong> Ghostscript runs in your
+          browser with WebAssembly, so compression can be slower for larger
+          files. PDFs under 10 pages are recommended.
+        </p>
+
+        <div className="actions">
+          <button
+            className="primary-button"
+            onClick={compress}
+            disabled={!file || isCompressing}
+            type="button"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {isCompressing ? "Compressing..." : "Compress PDF"}
+          </button>
         </div>
-      </main>
-    </div>
+
+        {progress.total > 0 && (
+          <div className="progress-area" aria-live="polite">
+            <div className="progress-label">
+              <span>
+                {isCompressing ? "Compressing pages" : "Compression complete"}
+              </span>
+              <span>
+                {progress.current} / {progress.total}
+              </span>
+            </div>
+            <div
+              className="progress-track"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax={progress.total}
+              aria-valuenow={progress.current}
+            >
+              <div
+                className="progress-bar"
+                style={{
+                  width: `${(progress.current / progress.total) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {message && (
+          <p className="status-message" role="status">
+            {message}
+          </p>
+        )}
+      </section>
+    </main>
   );
 }
