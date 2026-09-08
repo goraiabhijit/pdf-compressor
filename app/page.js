@@ -1,12 +1,19 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const [file, setFile] = useState(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [message, setMessage] = useState("");
+  const [compressedUrl, setCompressedUrl] = useState("");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const engineLoadPromise = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (compressedUrl) URL.revokeObjectURL(compressedUrl);
+    };
+  }, [compressedUrl]);
 
   const loadGhostscript = () => {
     if (window.ghostscript) return Promise.resolve(window.ghostscript);
@@ -62,6 +69,7 @@ export default function Home() {
 
     setIsCompressing(true);
     setMessage("");
+    setCompressedUrl("");
 
     try {
       const ghostscript = await loadGhostscript();
@@ -102,12 +110,7 @@ export default function Home() {
 
       const pdfBlob = new Blob([output], { type: "application/pdf" });
       const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = "compressed.pdf";
-      link.click();
-      URL.revokeObjectURL(url);
+      setCompressedUrl(url);
       setMessage("Your compressed PDF is ready.");
     } catch (error) {
       console.error(error);
@@ -121,6 +124,7 @@ export default function Home() {
     const selectedFile = event.target.files?.[0] ?? null;
     setFile(selectedFile);
     setMessage("");
+    setCompressedUrl("");
     setProgress({ current: 0, total: 0 });
   };
 
@@ -179,6 +183,15 @@ export default function Home() {
           >
             {isCompressing ? "Compressing..." : "Compress PDF"}
           </button>
+          {compressedUrl && !isCompressing && (
+            <a
+              className="secondary-button download-button"
+              href={compressedUrl}
+              download="compressed.pdf"
+            >
+              Download file
+            </a>
+          )}
         </div>
 
         {progress.total > 0 && (

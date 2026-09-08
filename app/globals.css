@@ -277,6 +277,10 @@ h1 {
   background: white;
   border: 1px solid var(--line) !important;
   color: var(--navy);
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .secondary-button:hover:not(:disabled) {
