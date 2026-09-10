@@ -66,6 +66,18 @@ The application currently uses Ghostscript's `/ebook` preset, which balances
 file size and document quality. Compression results depend on the PDF's images,
 fonts, and existing compression.
 
+### Third-Party Software
+
+This project uses **Ghostscript-WASM by jsscheller**, licensed under the
+**GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+Ghostscript-WASM is loaded from jsDelivr.
+
+Upstream project: `https://github.com/jsscheller/ghostscript-wasm`
+
+The AGPL-3.0 license and applicable copyright notices remain applicable to the
+Ghostscript-WASM component.
+
 ## Scripts
 
 | Command         | Description                  |
